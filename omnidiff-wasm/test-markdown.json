@@ -1,0 +1,5 @@
+{
+	"path": "x.md",
+	"before": "# Title\n\n(SFTRSTF set, no BOR/watchdog flag alongside). **Always intentional** - the\nfirmware deliberately rebooted itself. Four call sites:\n\n1. OTA\n",
+	"after": "# Title\n\n(SFTRSTF set, no BOR/watchdog flag alongside). The firmware rebooted itself, but\n**not always on purpose**: a firmware panic/assert also ends in `NVIC_SystemReset()`\n(site 5). Five call sites:\n\n1. OTA\n"
+}

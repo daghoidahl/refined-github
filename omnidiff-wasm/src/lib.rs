@@ -1,10 +1,10 @@
 //! Input: {"before": str, "after": str, "path": str}
-//! Output: {"language": str, "before": [[op, sr, sc, er, ec, dr, dc, der, dec], ...], "after": [...]}
+//! Output: {"language": str, "structural": bool, "before": [[op, sr, sc, er, ec, dr, dc, der, dec], ...], "after": [...]}
 //! Columns are byte offsets within the row, as omnidiff reports them.
 use omnidiff::code::language::{language_for_path_and_content, stable_name};
 use omnidiff::code::{Code, Language};
 use omnidiff::diff::NodeCache;
-use omnidiff::diff::text::{RangeMatch, RenderOptions, TextDiff, ranges_for_options};
+use omnidiff::diff::text::{RangeMatch, RenderOptions, TextDiff, plain_text_line_diff, ranges_for_options};
 
 #[derive(serde::Deserialize)]
 struct Input {
@@ -26,21 +26,26 @@ pub fn diff_json(input: &str) -> String {
     let language = language_for_path_and_content(path, &input.after).unwrap_or(Language::Unknown);
     let before = Code::from_string(&input.before, &language);
     let after = Code::from_string(&input.after, &language);
-    let diff = omnidiff::diff::diff_code(&before, &after);
-    // Plain text (no grammar) has no AST diff; GitHub's own line diff then stays as it is.
-    let text = diff.ast.as_ref().map(|ast| {
+    // Without a grammar (Markdown, SQL, unknown extensions) omnidiff falls back to its line diff,
+    // which still splits changed lines into sub-line updates. Same test as the TUI's `diff_parsed`.
+    let structural = before.ast.is_some() && after.ast.is_some();
+    let (before_ranges, after_ranges) = if structural {
+        let diff = omnidiff::diff::diff_code(&before, &after);
+        let ast = diff.ast.as_ref().expect("a parsed pair has an AST diff");
         let cache = NodeCache::build(&before, &after);
-        TextDiff::from(&before, &after, ast, &cache)
-    });
-    let side = |i: usize, source: &str| -> Vec<(String, [usize; 8])> {
-        text.as_ref().map_or(vec![], |t| {
-            ranges_for_options(&t.all(i), source, RenderOptions::FULL).iter().map(flat).collect()
-        })
+        let text = TextDiff::from(&before, &after, ast, &cache);
+        (text.all(0), text.all(1))
+    } else {
+        plain_text_line_diff(&input.before, &input.after)
+    };
+    let side = |ranges: &[RangeMatch], source: &str| -> Vec<(String, [usize; 8])> {
+        ranges_for_options(ranges, source, RenderOptions::FULL).iter().map(flat).collect()
     };
     serde_json::json!({
         "language": stable_name(language),
-        "before": side(0, &input.before),
-        "after": side(1, &input.after),
+        "structural": structural,
+        "before": side(&before_ranges, &input.before),
+        "after": side(&after_ranges, &input.after),
     })
     .to_string()
 }

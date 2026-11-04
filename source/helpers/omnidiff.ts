@@ -15,12 +15,15 @@ export type RangeMatch = {
 
 export type FileDiff = {
 	language: string;
+	/** False when the file has no grammar and omnidiff fell back to its line diff */
+	structural: boolean;
 	before: RangeMatch[];
 	after: RangeMatch[];
 };
 
 type RawDiff = {
 	language: string;
+	structural: boolean;
 	before: Array<[Operation, number[]]>;
 	after: Array<[Operation, number[]]>;
 };
@@ -84,5 +87,10 @@ export default async function diffFile(before: string, after: string, path: stri
 	exports.omnidiff_free(resultPointer, 4 + length);
 
 	const raw = JSON.parse(output) as RawDiff;
-	return {language: raw.language, before: parseRanges(raw.before), after: parseRanges(raw.after)};
+	return {
+		language: raw.language,
+		structural: raw.structural,
+		before: parseRanges(raw.before),
+		after: parseRanges(raw.after),
+	};
 }

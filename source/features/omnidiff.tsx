@@ -83,9 +83,8 @@ async function getVersions(path: string): Promise<Versions | undefined> {
 			return {...await diffFile(beforeText, afterText, path), beforeText, afterText};
 		})(),
 	);
-	const versions = await fileDiffs.get(fileKey)!;
 	// Undefined for added, deleted and too large files
-	return versions?.language === 'Unknown' ? undefined : versions;
+	return fileDiffs.get(fileKey)!;
 }
 
 /** The character offset in `line` of byte offset `column` */
