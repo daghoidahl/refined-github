@@ -135,12 +135,21 @@ function domRange(element: HTMLElement, start: number, end: number): Range | und
 }
 
 function lineNumberOf(code: HTMLElement): {side: Side; number: number} | undefined {
+	// React view: the cell carries the line number; the type is on the `code` element
+	const reactCell = closestElementOptional('td.diff-text-cell[data-line-number]', code);
+	if (reactCell) {
+		const type = closestElement('code.diff-text', code);
+		const number = Number(reactCell.getAttribute('data-line-number'));
+		return number > 0 ? {side: type.classList.contains('deletion') ? 'before' : 'after', number} : undefined;
+	}
+
+	// Legacy view
 	const cell = closestElement([
-		'.blob-code-deletion', // Left side, both views
-		'.blob-code-addition', // Right side, both views
+		'.blob-code-deletion', // Left side
+		'.blob-code-addition', // Right side
 	], code);
 	const side: Side = cell.classList.contains('blob-code-deletion') ? 'before' : 'after';
-	const row = closestElement('tr, .diff-line-row', cell);
+	const row = closestElement('tr', cell);
 	const numbers = $$('[data-line-number]', row);
 	const splitSide = cell.getAttribute('data-split-side');
 	const numberCell = splitSide
@@ -154,34 +163,49 @@ function lineNumberOf(code: HTMLElement): {side: Side; number: number} | undefin
 	return number > 0 ? {side, number} : undefined;
 }
 
-function filePathOf(code: HTMLElement): string | undefined {
+async function sha256(text: string): Promise<string> {
+	const digest = await crypto.subtle.digest('SHA-256', encoder.encode(text));
+	return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** GitHub anchors each file as `diff-` + SHA-256 of its path, so the PR's file list maps anchors back to paths */
+async function getPathsByAnchor(): Promise<Map<string, string>> {
+	const paths = new Map<string, string>();
+	for await (const page of api.v3paginated(`pulls/${getConversationNumber()!}/files?per_page=100`)) {
+		for (const {filename} of page as unknown as Array<{filename: string}>) {
+			// eslint-disable-next-line no-await-in-loop -- Sequential by design, the digests are instant
+			paths.set(await sha256(filename), filename);
+		}
+	}
+
+	return paths;
+}
+
+const pathsByAnchor = new Map<string, Promise<Map<string, string>>>();
+
+async function filePathOf(code: HTMLElement): Promise<string | undefined> {
 	// Legacy view
 	const legacy = closestElementOptional('[data-tagsearch-path]', code);
 	if (legacy) {
 		return legacy.getAttribute('data-tagsearch-path')!;
 	}
 
-	// React view: the header shows "old  new" for renames; the new name is what the head has
-	const container = closestElementOptional('div[id^="diff-"]', code);
-	if (!container) {
+	// React view
+	const anchored = closestElementOptional('[data-line-anchor^="diff-"]', code);
+	if (!anchored) {
 		return undefined;
 	}
 
-	const nameElement = $$([
-		'[class*="file-name"] span:not(.sr-only)', // React PR files
-		'[class*="file-name"] code', // React PR files, newer header
-	], container).at(-1);
-	if (!nameElement) {
-		return undefined;
-	}
-
-	const name = nameElement.textContent.trim().replaceAll('‎', '').split('  ').at(-1)!;
-	return name === '' ? undefined : name;
+	const hash = anchored.getAttribute('data-line-anchor')!.slice('diff-'.length, 'diff-'.length + 64);
+	const key = location.pathname.split('/').slice(0, 5).join('/');
+	pathsByAnchor.set(key, pathsByAnchor.get(key) ?? getPathsByAnchor());
+	const paths = await pathsByAnchor.get(key)!;
+	return paths.get(hash);
 }
 
 async function paint(code: HTMLElement): Promise<void> {
 	const line = lineNumberOf(code);
-	const path = filePathOf(code);
+	const path = await filePathOf(code);
 	if (!line || !path) {
 		return;
 	}
@@ -214,8 +238,9 @@ function init(signal: AbortSignal): void {
 
 	observe(
 		[
+			'code.diff-text.deletion .diff-text-inner', // React view, left side
+			'code.diff-text.addition .diff-text-inner', // React view, right side
 			':is(.blob-code-addition, .blob-code-deletion) .blob-code-inner', // Legacy view
-			':is(.blob-code-addition, .blob-code-deletion) .diff-text-inner', // React view
 		],
 		paint,
 		{signal},
