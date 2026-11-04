@@ -1,6 +1,9 @@
-/* Within a changed line, text omnidiff found unchanged fades out and only the changed parts stay loud */
-::highlight(rgh-omnidiff-same) {
-	color: var(--fgColor-muted, fuchsia);
+/* Only what omnidiff found changed gets color, like in its own viewer: painted lines lose GitHub's line tint */
+/* React view, then legacy view */
+td.diff-text-cell:has(.rgh-omnidiff),
+.blob-code-addition:has(.rgh-omnidiff),
+.blob-code-deletion:has(.rgh-omnidiff) {
+	background-color: var(--bgColor-default, fuchsia) !important;
 }
 
 ::highlight(rgh-omnidiff-deletion) {

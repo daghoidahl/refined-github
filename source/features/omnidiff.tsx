@@ -15,15 +15,16 @@ const maxFileBytes = 300_000;
 
 type Side = 'before' | 'after';
 
-const highlightNames = ['same', 'deletion', 'addition', 'move'] as const;
+const highlightNames = ['deletion', 'addition', 'move'] as const;
 const highlights = Object.fromEntries(
 	highlightNames.map(name => [name, new Highlight()]),
 ) as Record<typeof highlightNames[number], Highlight>;
 
-function highlightFor(operation: Operation, side: Side): Highlight {
+/** Undefined for text omnidiff found unchanged: it keeps its syntax colors, like in omnidiff's own viewer */
+function highlightFor(operation: Operation, side: Side): Highlight | undefined {
 	switch (operation) {
 		case 'Identical': {
-			return highlights.same;
+			return undefined;
 		}
 
 		case 'Move': {
@@ -222,9 +223,10 @@ async function paint(code: HTMLElement): Promise<void> {
 	}
 
 	for (const [operation, start, end] of rangesOnRow(versions[line.side], row, text)) {
-		const range = domRange(code, start, end);
+		const highlight = highlightFor(operation, line.side);
+		const range = highlight && domRange(code, start, end);
 		if (range) {
-			highlightFor(operation, line.side).add(range);
+			highlight.add(range);
 		}
 	}
 
