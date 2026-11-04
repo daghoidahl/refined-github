@@ -26,6 +26,7 @@
 		"watch:bundle": "tsdown --watch"
 	},
 	"dependencies": {
+		"@bjorn3/browser_wasi_shim": "^0.4.2",
 		"@fregante/mi-cron": "^2.0.1",
 		"@sindresorhus/to-milliseconds": "^2.0.0",
 		"abort-utils": "^3.0.0",

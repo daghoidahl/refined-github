@@ -89,7 +89,7 @@ export default defineConfig([
 		clean: true,
 		copy: [
 			{from: 'source/manifest.json', to: 'distribution'},
-			{from: 'source/*.{html,png,js}', to: 'distribution/assets'},
+			{from: 'source/*.{html,png,js,wasm}', to: 'distribution/assets'},
 		],
 		plugins: [
 			svelte(svelteConfig),

@@ -274,6 +274,7 @@ https://github.com/refined-github/refined-github/wiki/Contributing#metadata-guid
 - [](# "one-click-diff-options") [Adds "Hide whitespace" button to Compare pages and a keyboard shortcut to PRs and Compare pages: <kbd>d</kbd> <kbd>w</kbd>.](https://github.com/user-attachments/assets/0b92992a-69a4-4de1-ab2a-cb6508870b4a)
 - [](# "extend-diff-expander") [Widens the `Expand diff` button to be clickable across the screen.](https://user-images.githubusercontent.com/1402241/152118201-f25034c7-6fae-4be0-bb3f-c217647e32b7.gif)
 - [](# "hide-diff-signs") [Hides diff signs since diffs are color coded already.](https://user-images.githubusercontent.com/1402241/54807718-149cec80-4cb9-11e9-869c-e265863211e3.png)
+- [](# "omnidiff") Paints only the parts of a changed line that actually changed, and marks moved code, using the [omnidiff](https://github.com/ivankovic/omnidiff) structural diff engine (AGPL-3.0; 23 languages).
 - [](# "suggest-commit-title-limit") [Suggests limiting commit and PR titles to 72 characters.](https://github.com/user-attachments/assets/e0392989-9c60-4f5c-9052-27a3bb51d4e4)
 - [](# "tags-on-commits-list") [Displays the corresponding tags next to commits.](https://user-images.githubusercontent.com/1402241/285106537-3c882cb2-6847-4098-9e51-cf2951dee818.png)
 - [](# "mark-merge-commits-in-list") [Marks merge commits in commit lists.](https://github-production-user-asset-6210df.s3.amazonaws.com/1402241/285106996-9bdbc938-69c4-4692-8d47-11e30676de62.png)

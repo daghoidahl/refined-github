@@ -1,0 +1,3 @@
+[target.wasm32-wasip1]
+# Shadow stack: the TUI diffs on a 256 MB thread; a 590 KB Rust file overflowed 64 MB in wasm.
+rustflags = ["-C", "link-arg=-zstack-size=268435456"]

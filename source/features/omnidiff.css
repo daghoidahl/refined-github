@@ -1,0 +1,22 @@
+/* Within a changed line, text omnidiff found unchanged fades out and only the changed parts stay loud */
+::highlight(rgh-omnidiff-same) {
+	color: var(--fgColor-muted, fuchsia);
+}
+
+::highlight(rgh-omnidiff-deletion) {
+	background-color: var(--diffBlob-deletionWord-bgColor, fuchsia);
+}
+
+::highlight(rgh-omnidiff-addition) {
+	background-color: var(--diffBlob-additionWord-bgColor, fuchsia);
+}
+
+::highlight(rgh-omnidiff-move) {
+	background-color: var(--bgColor-accent-muted, fuchsia);
+	text-decoration: underline dotted;
+}
+
+/* GitHub's own word-level marks would double up with ours */
+.rgh-omnidiff .x {
+	background-color: transparent !important;
+}

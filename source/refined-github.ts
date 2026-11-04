@@ -59,6 +59,7 @@ import './features/last-update-sort.js'; // Must be after global-conversation-li
 import './features/pinned-issues-update-time.js';
 import './features/mark-pinned.js';
 import './features/default-branch-button.js';
+import './features/omnidiff.js';
 import './features/one-click-diff-options.js';
 import './features/sync-pr-commit-title.js';
 import './features/hide-inactive-deployments.js';

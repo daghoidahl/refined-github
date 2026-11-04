@@ -1,0 +1,64 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 2ad7838..a7b14f6 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -171,7 +171,8 @@ tree-sitter-rust = "0.24"
+ tree-sitter-scala = "0.24"
+ tree-sitter-swift = "0.7"
+ tree-sitter-typescript = "0.23"
+-tree-sitter-vim = "0.4"
++# Optional: its 4.5 MB parser.c needs >14 GB RAM to compile for wasm32, so wasm builds leave it out.
++tree-sitter-vim = { version = "0.4", optional = true }
+ tree-sitter-xml = "0.7.0"
+ tree-sitter-yaml = "0.7"
+ # tree-sitter-perl/tree-sitter-perl, the grammar nvim-treesitter uses, is published under this name;
+@@ -208,7 +209,8 @@ lzma-rust2 = { version = "0.21", default-features = false, features = ["std", "x
+ [features]
+ # A bare `cargo install omnidiff` builds the TUI binary; a library consumer opts out with
+ # `default-features = false`.
+-default = ["tui"]
++default = ["tui", "vim"]
++vim = ["dep:tree-sitter-vim"]
+ # Everything the TUI (src/tui/, src/main.rs) needs. Every dev-tool feature implies it: some of those
+ # bins use these deps directly, and tracking which ones is not worth it.
+ tui = [
+diff --git a/src/code.rs b/src/code.rs
+index 260ec49..8946988 100644
+--- a/src/code.rs
++++ b/src/code.rs
+@@ -202,7 +202,8 @@ pub fn build_sides<A: Send, B>(
+     before: impl FnOnce() -> A + Send,
+     after: impl FnOnce() -> B,
+ ) -> (A, B) {
+-    if !parallel {
++    // wasm has no threads: build in order there, whatever the size.
++    if !parallel || cfg!(target_family = "wasm") {
+         return (before(), after());
+     }
+     std::thread::scope(|scope| {
+diff --git a/src/code/language.rs b/src/code/language.rs
+index 12e7050..47136b3 100644
+--- a/src/code/language.rs
++++ b/src/code/language.rs
+@@ -323,6 +323,7 @@ pub fn to_treesitter(language: &Language) -> Option<tree_sitter::Language> {
+         Language::Swift => Some(tree_sitter_swift::LANGUAGE.into()),
+         Language::TSX => Some(tree_sitter_typescript::LANGUAGE_TSX.into()),
+         Language::TypeScript => Some(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()),
++        #[cfg(feature = "vim")]
+         Language::Vimscript => Some(tree_sitter_vim::language()),
+         Language::YAML => Some(tree_sitter_yaml::LANGUAGE.into()),
+         Language::XML => Some(tree_sitter_xml::LANGUAGE_XML.into()),
+diff --git a/src/code/metadata.rs b/src/code/metadata.rs
+index 55d8fc6..eafd7f7 100644
+--- a/src/code/metadata.rs
++++ b/src/code/metadata.rs
+@@ -168,7 +168,8 @@ const PARALLEL_METADATA_MIN_NODES: usize = 16 * 1024;
+ /// A panic in any task reaches the caller.
+ fn run_tasks<'a>(parallel: bool, tasks: Vec<Box<dyn FnOnce() + Send + 'a>>) {
+     let mut tasks = tasks.into_iter();
+-    if !parallel {
++    // wasm has no threads: build in order there, whatever the size.
++    if !parallel || cfg!(target_family = "wasm") {
+         tasks.for_each(|task| task());
+         return;
+     }

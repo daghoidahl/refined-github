@@ -10,3 +10,6 @@ artifacts
 desktop.ini
 
 LocalOverrides.xcconfig
+
+# omnidiff checkout for omnidiff-wasm/build.sh
+/omnidiff-src/

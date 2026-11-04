@@ -1,0 +1,5 @@
+{
+	"path": "x.py",
+	"before": "def total(numbers):\n    result = 0\n    for n in numbers:\n        result += n\n    return result\n\ndef mean(numbers):\n    return total(numbers) / len(numbers)\n",
+	"after": "def mean(numbers):\n    return sum(numbers) / len(numbers)\n\ndef total(numbers):\n    result = 0\n    for n in numbers:\n        result += n\n    return result\n"
+}
