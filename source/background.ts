@@ -13,6 +13,7 @@ import {doesBrowserActionOpenOptions} from './helpers/feature-utils.js';
 import {styleHotfixes} from './helpers/hotfix.js';
 import isDevelopmentVersion from './helpers/is-development-version.js';
 import {fetchText} from './helpers/isomorphic-fetch.js';
+import {diffWithEngine} from './helpers/omnidiff-engine.js';
 import safeCreateTab from './helpers/safe-create-tab.js';
 import optionsStorage from './options-storage.js';
 import addIdentifyFeatureContextMenu from './options/identify-feature.js';
@@ -65,6 +66,7 @@ handleMessages({
 	async getStyleHotfixes() {
 		return styleHotfixes.get(version);
 	},
+	omnidiff: diffWithEngine,
 });
 
 chrome.action.onClicked.addListener(async tab => {
